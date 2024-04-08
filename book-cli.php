@@ -20,12 +20,7 @@ if (!class_exists('Book_CLI_Command')) {
                                 case 'generate':
                                         // Implement 'generate<quantity>' subcommand to add a book
                                         // Example: wp book generate 10
-                                        if (isset($args[1]) && is_numeric($args[1])) {
-                                                $quantity = intval($args[1]);
-                                                $this->generate_fake_books($quantity);
-                                        } else {
-                                                WP_CLI::line("Please provide the quantity for generating books.");
-                                        }
+                                                $this->generate_fake_books($assoc_args);
                                         break;
                                 case 'create':
                                         // Implement 'create' subcommand to update a book
@@ -53,7 +48,7 @@ if (!class_exists('Book_CLI_Command')) {
 
                                 case 'list':
                                         // Implement 'list' subcommand to list all books
-                                        // Example: wp book list
+                                        // Example: wp book list <JSON,ASCII table, YAML>
                                         $this->format_list($assoc_args);
                                         break;
 
@@ -63,8 +58,17 @@ if (!class_exists('Book_CLI_Command')) {
                         }
                 }
 
-                private function generate_fake_books($quantity)
+                private function generate_fake_books($args)
                 {
+                        // check corect value 
+                        if (!isset($args[1]) || !is_numeric($args[1])) {
+                                WP_CLI::line("Please provide the quantity for generating books.");
+                                return;
+                        }
+
+
+                        $quantity = intval($args[1]);
+
                         // API endpoint URL
                         $url = "https://fakerapi.it/api/v1/books?_quantity=" . $quantity;
 
