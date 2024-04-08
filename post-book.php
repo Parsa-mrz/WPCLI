@@ -1,10 +1,10 @@
 <?php
 class Custom_Book_Post_Type
 {
-
     public function __construct()
     {
         add_action('init', array($this, 'register_book_post_type'));
+        add_action('admin_menu', array($this, 'add_cli_submenu'));
     }
 
     public function register_book_post_type()
@@ -59,6 +59,23 @@ class Custom_Book_Post_Type
             'capability_type'       => 'post',
         );
         register_post_type('book', $args);
+    }
+
+    public function add_cli_submenu()
+    {
+        add_submenu_page(
+            'edit.php?post_type=book',
+            __('CLI Commands', 'text_domain'),
+            __('CLI Commands', 'text_domain'),
+            'manage_options',
+            'book-cli-commands',
+            array($this, 'cli_commands_page')
+        );
+    }
+
+    public function cli_commands_page()
+    {
+        require_once(book_DIR  . 'cli-command.php');
     }
 }
 

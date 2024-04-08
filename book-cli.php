@@ -20,7 +20,7 @@ if (!class_exists('Book_CLI_Command')) {
                                 case 'generate':
                                         // Implement 'generate<quantity>' subcommand to add a book
                                         // Example: wp book generate 10
-                                                $this->generate_fake_books($assoc_args);
+                                        $this->generate_fake_books($assoc_args);
                                         break;
                                 case 'create':
                                         // Implement 'create' subcommand to update a book
@@ -177,21 +177,48 @@ if (!class_exists('Book_CLI_Command')) {
                         // Check if the post exists and is of the 'book' post type
                         if ($book && $book->post_type === 'book') {
                                 // Retrieve book metadata
-                                $author = get_post_meta($id, '_author', true);
-                                $genre = get_post_meta($id, '_genre', true);
-                                $isbn = get_post_meta($id, '_isbn', true);
-                                $publisher = get_post_meta($id, '_publisher', true);
+                                $author = get_post_meta($book->ID, '_author', true);
+                                $genre = get_post_meta($book->ID, '_genre', true);
+                                $isbn = get_post_meta($book->ID, '_isbn', true);
+                                $publisher = get_post_meta($book->ID, '_publisher', true);
 
-                                // Display book information
-                                WP_CLI::line("Book ID: $id");
-                                WP_CLI::line("Title: $book->post_title");
-                                WP_CLI::line("Description: $book->post_content");
-                                WP_CLI::line("Author: $author");
-                                WP_CLI::line("Genre: $genre");
-                                WP_CLI::line("ISBN: $isbn");
-                                WP_CLI::line("Publisher: $publisher");
+                                // Prepare book data
+                                $book_data = array(
+                                        'ID' => $book->ID,
+                                        'Title' => $book->post_title,
+                                        'Description' => $book->post_content,
+                                        'Author' => $author,
+                                        'Genre' => $genre,
+                                        'ISBN' => $isbn,
+                                        'Publisher' => $publisher,
+                                );
+
+                                // Check the format argument to determine the output format
+                                $format = isset($args['format']) ? $args['format'] : 'table';
+
+                                // Output the formatted data based on the specified format
+                                switch ($format) {
+                                        case 'table':
+                                                WP_CLI\Utils\format_items('table', array($book_data), array('ID', 'Title', 'Description', 'Author', 'Genre', 'ISBN', 'Publisher'));
+                                                break;
+                                        case 'yaml':
+                                                WP_CLI::line(yaml_emit(array($book_data)));
+                                                break;
+                                        case 'json':
+                                                WP_CLI::line(json_encode(array($book_data)));
+                                                break;
+                                        case 'ids':
+                                                WP_CLI::line($book->ID);
+                                                break;
+                                        case 'count':
+                                                WP_CLI::line(1);
+                                                break;
+                                        default:
+                                                WP_CLI::error("Invalid format. Supported formats: table, yaml, json, ids, count");
+                                                break;
+                                }
                         } else {
-                                WP_CLI::error("Book not found with ID: $id");
+                                WP_CLI::error("Book not found with ID: $book_id");
                         }
                 }
 
@@ -299,8 +326,16 @@ if (!class_exists('Book_CLI_Command')) {
                                 case 'json':
                                         WP_CLI::line(json_encode($formatted_books));
                                         break;
+                                case 'ids':
+                                        foreach ($formatted_books as $book) {
+                                                WP_CLI::line($book['ID']);
+                                        }
+                                        break;
+                                case 'count':
+                                        WP_CLI::line(count($formatted_books));
+                                        break;
                                 default:
-                                        WP_CLI::error("Invalid format. Supported formats: table, yaml, json");
+                                        WP_CLI::error("Invalid format. Supported formats: table, yaml, json, ids, count");
                                         break;
                         }
                 }
