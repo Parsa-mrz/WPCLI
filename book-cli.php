@@ -48,14 +48,15 @@ if (!class_exists('Book_CLI_Command')) {
                                 case 'delete':
                                         // Implement 'delete' subcommand to delete a book
                                         // Example: wp book delete <book_id>
-                                        // Your code here
+                                        $this->delete_book($assoc_args);
                                         break;
 
                                 case 'list':
                                         // Implement 'list' subcommand to list all books
                                         // Example: wp book list
-                                        // Your code here
+                                        $this->format_list($assoc_args);
                                         break;
+
                                 default:
                                         WP_CLI::line("Unknown subcommand. Supported subcommands: generate, create, get, update, delete, list");
                                         break;
@@ -156,15 +157,18 @@ if (!class_exists('Book_CLI_Command')) {
                         }
                 }
 
-                private function get_book($id)
+                private function get_book($args)
                 {
                         // Check if book ID is provided
-                        if (empty($id)) {
+                        if (empty($args[0])) {
                                 WP_CLI::error("Please provide the book ID.");
                         }
 
+                        // Extract book ID from args
+                        $book_id = $args[0];
+
                         // Get the post by ID
-                        $book = get_post($id);
+                        $book = get_post($book_id);
 
                         // Check if the post exists and is of the 'book' post type
                         if ($book && $book->post_type === 'book') {
@@ -224,6 +228,76 @@ if (!class_exists('Book_CLI_Command')) {
                                 }
                         } else {
                                 WP_CLI::error("Book not found with ID: $book_id");
+                        }
+                }
+
+                private function delete_book($args)
+                {
+                        // Check if book ID is provided
+                        if (empty($args[0])) {
+                                WP_CLI::error("Please provide the book ID.");
+                        }
+
+                        // Extract book ID from args
+                        $book_id = $args[0];
+
+                        // Get the post by ID
+                        $book = get_post($book_id);
+
+                        // Check if the post exists and is of the 'book' post type
+                        if ($book && $book->post_type === 'book') {
+                                // Delete the post
+                                $deleted = wp_delete_post($book_id, true); // Set to true to force delete permanently
+
+                                if ($deleted !== false) {
+                                        WP_CLI::success("Book deleted successfully with ID: $book_id");
+                                } else {
+                                        WP_CLI::error("Failed to delete book with ID: $book_id");
+                                }
+                        } else {
+                                WP_CLI::error("Book not found with ID: $book_id");
+                        }
+                }
+
+                private function format_list($args)
+                {
+                        // Get all books
+                        $books = get_posts(array(
+                                'post_type' => 'book',
+                                'posts_per_page' => -1, // Retrieve all posts
+                        ));
+
+                        // Prepare data for formatting
+                        $formatted_books = array();
+                        foreach ($books as $book) {
+                                $formatted_books[] = array(
+                                        'ID' => $book->ID,
+                                        'Title' => $book->post_title,
+                                        'Description' => $book->post_content,
+                                        'Author' => get_post_meta($book->ID, '_author', true),
+                                        'Genre' => get_post_meta($book->ID, '_genre', true),
+                                        'ISBN' => get_post_meta($book->ID, '_isbn', true),
+                                        'Publisher' => get_post_meta($book->ID, '_publisher', true),
+                                );
+                        }
+
+                        // Check the format argument to determine the output format
+                        $format = isset($args['format']) ? $args['format'] : 'table';
+
+                        // Output the formatted data based on the specified format
+                        switch ($format) {
+                                case 'table':
+                                        WP_CLI\Utils\format_items('table', $formatted_books, array('ID', 'Title', 'Description', 'Author', 'Genre', 'ISBN', 'Publisher'));
+                                        break;
+                                case 'yaml':
+                                        WP_CLI::line(yaml_emit($formatted_books));
+                                        break;
+                                case 'json':
+                                        WP_CLI::line(json_encode($formatted_books));
+                                        break;
+                                default:
+                                        WP_CLI::error("Invalid format. Supported formats: table, yaml, json");
+                                        break;
                         }
                 }
         }
