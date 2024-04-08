@@ -36,13 +36,21 @@ if (!class_exists('Book_CLI_Command')) {
                                 case 'get':
                                         // Implement 'get<id>' subcommand to update a book
                                         // Example: wp book get 145
+                                        $this->get_book($assoc_args);
+                                        break;
+
+                                case 'update':
+                                        // Implement 'get<id>' subcommand to update a book
+                                        // Example: wp book get 145
 
                                         break;
+
                                 case 'delete':
                                         // Implement 'delete' subcommand to delete a book
                                         // Example: wp book delete <book_id>
                                         // Your code here
                                         break;
+
                                 case 'list':
                                         // Implement 'list' subcommand to list all books
                                         // Example: wp book list
@@ -145,6 +153,37 @@ if (!class_exists('Book_CLI_Command')) {
                                 WP_CLI::success("Book created successfully with ID: $post_id");
                         } else {
                                 WP_CLI::error("Failed to create book: " . $post_id->get_error_message());
+                        }
+                }
+
+                private function get_book($id)
+                {
+                        // Check if book ID is provided
+                        if (empty($id)) {
+                                WP_CLI::error("Please provide the book ID.");
+                        }
+
+                        // Get the post by ID
+                        $book = get_post($id);
+
+                        // Check if the post exists and is of the 'book' post type
+                        if ($book && $book->post_type === 'book') {
+                                // Retrieve book metadata
+                                $author = get_post_meta($id, '_author', true);
+                                $genre = get_post_meta($id, '_genre', true);
+                                $isbn = get_post_meta($id, '_isbn', true);
+                                $publisher = get_post_meta($id, '_publisher', true);
+
+                                // Display book information
+                                WP_CLI::line("Book ID: $id");
+                                WP_CLI::line("Title: $book->post_title");
+                                WP_CLI::line("Description: $book->post_content");
+                                WP_CLI::line("Author: $author");
+                                WP_CLI::line("Genre: $genre");
+                                WP_CLI::line("ISBN: $isbn");
+                                WP_CLI::line("Publisher: $publisher");
+                        } else {
+                                WP_CLI::error("Book not found with ID: $id");
                         }
                 }
         }
