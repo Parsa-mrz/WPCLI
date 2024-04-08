@@ -29,7 +29,7 @@ if (!class_exists('Book_CLI_Command')) {
                                         break;
                                 case 'create':
                                         // Implement 'create' subcommand to update a book
-                                        // Example: wp book create --title="New Title" --author="New Author"
+                                        // Example: wp book create --title="New Title" --author="New Author" .....
                                         $this->create_book($assoc_args);
                                         break;
 
@@ -41,8 +41,8 @@ if (!class_exists('Book_CLI_Command')) {
 
                                 case 'update':
                                         // Implement 'get<id>' subcommand to update a book
-                                        // Example: wp book get 145
-
+                                        // Example: wp book update 145 --title="New Title" --author="New Author" .....
+                                        $this->update_book($assoc_args);
                                         break;
 
                                 case 'delete':
@@ -57,7 +57,7 @@ if (!class_exists('Book_CLI_Command')) {
                                         // Your code here
                                         break;
                                 default:
-                                        WP_CLI::line("Unknown subcommand. Supported subcommands: add, update, delete, list");
+                                        WP_CLI::line("Unknown subcommand. Supported subcommands: generate, create, get, update, delete, list");
                                         break;
                         }
                 }
@@ -184,6 +184,46 @@ if (!class_exists('Book_CLI_Command')) {
                                 WP_CLI::line("Publisher: $publisher");
                         } else {
                                 WP_CLI::error("Book not found with ID: $id");
+                        }
+                }
+
+                private function update_book($args)
+                {
+                        // Check if book ID is provided
+                        if (empty($args[0])) {
+                                WP_CLI::error("Please provide the book ID.");
+                        }
+
+                        // Extract book ID from args
+                        $book_id = $args[0];
+
+                        // Get the post by ID
+                        $book = get_post($book_id);
+
+                        // Check if the post exists and is of the 'book' post type
+                        if ($book && $book->post_type === 'book') {
+                                // Extract updated values from assoc_args
+                                $updated_data = array(
+                                        'post_title'   => isset($args['title']) ? $args['title'] : $book->post_title,
+                                        'post_content' => isset($args['description']) ? $args['description'] : $book->post_content,
+                                );
+
+                                // Update the post
+                                $updated = wp_update_post(array_merge(['ID' => $book_id], $updated_data), true);
+
+                                if (!is_wp_error($updated)) {
+                                        // Update custom fields for the book
+                                        update_post_meta($book_id, '_author', isset($args['author']) ? $args['author'] : get_post_meta($book_id, '_author', true));
+                                        update_post_meta($book_id, '_genre', isset($args['genre']) ? $args['genre'] : get_post_meta($book_id, '_genre', true));
+                                        update_post_meta($book_id, '_isbn', isset($args['isbn']) ? $args['isbn'] : get_post_meta($book_id, '_isbn', true));
+                                        update_post_meta($book_id, '_publisher', isset($args['publisher']) ? $args['publisher'] : get_post_meta($book_id, '_publisher', true));
+
+                                        WP_CLI::success("Book updated successfully with ID: $book_id");
+                                } else {
+                                        WP_CLI::error("Failed to update book: " . $updated->get_error_message());
+                                }
+                        } else {
+                                WP_CLI::error("Book not found with ID: $book_id");
                         }
                 }
         }
