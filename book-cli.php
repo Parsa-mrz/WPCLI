@@ -43,13 +43,23 @@ if (!class_exists('Book_CLI_Command')) {
                                 case 'update':
                                         // Implement 'get<id>' subcommand to update a book
                                         // Example: wp book update 145 --title="New Title" --author="New Author" .....
-                                        $this->update_book($assoc_args);
+                                        if (isset($args[1])) {
+                                                $book_id = $args[1];
+                                                $this->update_book($book_id, $assoc_args);
+                                        } else {
+                                                WP_CLI::error("Please provide the book ID.");
+                                        }
                                         break;
 
                                 case 'delete':
                                         // Implement 'delete' subcommand to delete a book
                                         // Example: wp book delete <book_id>
-                                        $this->delete_book($assoc_args);
+                                        if (isset($args[1])) {
+                                                $book_id = $args[1];
+                                                $this->delete_book($book_id);
+                                        } else {
+                                                WP_CLI::error("Please provide the book ID.");
+                                        }
                                         break;
 
                                 case 'list':
@@ -237,15 +247,8 @@ if (!class_exists('Book_CLI_Command')) {
                         }
                 }
 
-                private function update_book($args)
+                private function update_book($book_id, $assoc_args)
                 {
-                        // Check if book ID is provided
-                        if (empty($args[0])) {
-                                WP_CLI::error("Please provide the book ID.");
-                        }
-
-                        // Extract book ID from args
-                        $book_id = $args[0];
 
                         // Get the post by ID
                         $book = get_post($book_id);
@@ -254,8 +257,8 @@ if (!class_exists('Book_CLI_Command')) {
                         if ($book && $book->post_type === 'book') {
                                 // Extract updated values from assoc_args
                                 $updated_data = array(
-                                        'post_title'   => isset($args['title']) ? $args['title'] : $book->post_title,
-                                        'post_content' => isset($args['description']) ? $args['description'] : $book->post_content,
+                                        'post_title'   => isset($assoc_args['title']) ? $assoc_args['title'] : $book->post_title,
+                                        'post_content' => isset($assoc_args['description']) ? $assoc_args['description'] : $book->post_content,
                                 );
 
                                 // Update the post
@@ -263,10 +266,10 @@ if (!class_exists('Book_CLI_Command')) {
 
                                 if (!is_wp_error($updated)) {
                                         // Update custom fields for the book
-                                        update_post_meta($book_id, '_author', isset($args['author']) ? $args['author'] : get_post_meta($book_id, '_author', true));
-                                        update_post_meta($book_id, '_genre', isset($args['genre']) ? $args['genre'] : get_post_meta($book_id, '_genre', true));
-                                        update_post_meta($book_id, '_isbn', isset($args['isbn']) ? $args['isbn'] : get_post_meta($book_id, '_isbn', true));
-                                        update_post_meta($book_id, '_publisher', isset($args['publisher']) ? $args['publisher'] : get_post_meta($book_id, '_publisher', true));
+                                        update_post_meta($book_id, '_author', isset($assoc_args['author']) ? $assoc_args['author'] : get_post_meta($book_id, '_author', true));
+                                        update_post_meta($book_id, '_genre', isset($assoc_args['genre']) ? $assoc_args['genre'] : get_post_meta($book_id, '_genre', true));
+                                        update_post_meta($book_id, '_isbn', isset($assoc_args['isbn']) ? $assoc_args['isbn'] : get_post_meta($book_id, '_isbn', true));
+                                        update_post_meta($book_id, '_publisher', isset($assoc_args['publisher']) ? $assoc_args['publisher'] : get_post_meta($book_id, '_publisher', true));
 
                                         WP_CLI::success("Book updated successfully with ID: $book_id");
                                 } else {
@@ -277,15 +280,8 @@ if (!class_exists('Book_CLI_Command')) {
                         }
                 }
 
-                private function delete_book($args)
+                private function delete_book($book_id)
                 {
-                        // Check if book ID is provided
-                        if (empty($args[0])) {
-                                WP_CLI::error("Please provide the book ID.");
-                        }
-
-                        // Extract book ID from args
-                        $book_id = $args[0];
 
                         // Get the post by ID
                         $book = get_post($book_id);
