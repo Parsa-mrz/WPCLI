@@ -120,46 +120,42 @@ if (!class_exists('Book_CLI_Command')) {
                         }
                 }
 
-                private function create_book($args)
+                private function create_book($assoc_args)
                 {
-                        // Extracting values from assoc_args
-                        $title = isset($args['title']) ? $args['title'] : '';
-                        $description = isset($args['description']) ? $args['description'] : '';
-                        $author = isset($args['author']) ? $args['author'] : '';
-                        $isbn = isset($args['isbn']) ? $args['isbn'] : '';
-                        $genre = isset($args['genre']) ? $args['genre'] : '';
-                        $publisher = isset($args['publisher']) ? $args['publisher'] : '';
-
-                        // Check if required fields are provided
-                        if (empty($title) || empty($description) || empty($author) || empty($isbn) || empty($genre) || empty($publisher)) {
-                                WP_CLI::error("Please provide all required fields: title, description, author, isbn, genre, and publisher.");
+                        // Check for all required parameters
+                        $required_params = ['title', 'description', 'author', 'isbn', 'genre', 'publisher'];
+                        foreach ($required_params as $param) {
+                                if (!isset($assoc_args[$param])) {
+                                        WP_CLI::error("Please provide all required fields: title, description, author, isbn, genre, and publisher.");
+                                        return;
+                                }
                         }
 
-                        // Create post data
+                        // Prepare the post data
                         $post_data = array(
-                                'post_title'   => $title,
-                                'post_content' => $description,
+                                'post_title'   => wp_strip_all_tags($assoc_args['title']),
+                                'post_content' => $assoc_args['description'],
                                 'post_status'  => 'publish',
-                                'post_author'  => 1, // Set the author ID
-                                'post_type'    => 'book', // Your custom post type
+                                'post_type'    => 'book', // Assuming 'book' is a custom post type
+                                // Custom meta fields
+                                'meta_input'   => array(
+                                        'author'    => $assoc_args['author'],
+                                        'isbn'      => $assoc_args['isbn'],
+                                        'genre'     => $assoc_args['genre'],
+                                        'publisher' => $assoc_args['publisher']
+                                )
                         );
 
-                        // Insert the post into the database
+                        // Insert the book into the database
                         $post_id = wp_insert_post($post_data);
 
-                        // Check if post insertion was successful
-                        if (!is_wp_error($post_id)) {
-                                // Set custom fields for the book
-                                update_post_meta($post_id, '_author', $author);
-                                update_post_meta($post_id, '_genre', $genre);
-                                update_post_meta($post_id, '_isbn', $isbn);
-                                update_post_meta($post_id, '_publisher', $publisher);
-
+                        if ($post_id) {
                                 WP_CLI::success("Book created successfully with ID: $post_id");
                         } else {
-                                WP_CLI::error("Failed to create book: " . $post_id->get_error_message());
+                                WP_CLI::error("There was an error creating the book.");
                         }
                 }
+
 
                 private function get_book($args)
                 {

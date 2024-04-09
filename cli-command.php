@@ -2,7 +2,7 @@
     <h1>CLI Command</h1>
     <hr><br><br>
 
-    <h2>1- genereate --quantity= </h2>
+    <h2>1- genereate 'quantity' </h2>
     <table class="wp-list-table widefat fixed striped">
         <thead>
             <tr>
@@ -23,7 +23,7 @@
     </table>
 
     <h3>Usage example:</h3>
-    <p>wp book generate --quantity=10</p>
+    <p>wp book generate 10</p>
     <hr>
     <br>
 
@@ -79,11 +79,7 @@
     </table>
 
     <h3>Usage example:</h3>
-    <p>wp book create --title="A Brief History of Time" --description="A Brief History of Time: From the Big Bang to Black Holes is a book on theoretical cosmology by English physicist
-        Stephen Hawking. It was first published in 1988. Hawking wrote
-        the book for readers who had no prior knowledge of physics." --
-        author="Stephen Hawking" --isbn="9780553109535" --
-        genre="Cosmology" --publisher="Bantam Dell Publishing Group"</p>
+    <p>wp book create --title="A Brief History of Time" --description="A Brief History of Time: From the Big Bang to Black Holes is a book on theoretical cosmology by English physicist Stephen Hawking. It was first published in 1988. Hawking wrote the book for readers who had no prior knowledge of physics." --author="Stephen Hawking" --isbn="9780553109535" --genre="Cosmology" --publisher="Bantam Dell Publishing Group"</p>
     <hr>
     <br>
 
