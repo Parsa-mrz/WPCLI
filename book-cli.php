@@ -20,7 +20,8 @@ if (!class_exists('Book_CLI_Command')) {
                                 case 'generate':
                                         // Implement 'generate<quantity>' subcommand to add a book
                                         // Example: wp book generate 10
-                                        $this->generate_fake_books($assoc_args);
+                                        $quantity = isset($args[1]) && is_numeric($args[1]) ? intval($args[1]) : 1; // Default to 1 if not provided
+                                        $this->generate_fake_books($quantity);
                                         break;
                                 case 'create':
                                         // Implement 'create' subcommand to update a book
@@ -58,16 +59,15 @@ if (!class_exists('Book_CLI_Command')) {
                         }
                 }
 
-                private function generate_fake_books($args)
+                private function generate_fake_books($quantity)
                 {
-                        // check corect value 
-                        if (!isset($args[1]) || !is_numeric($args[1])) {
-                                WP_CLI::line("Please provide the quantity for generating books.");
-                                return;
-                        }
+                        // Check if 'quantity' argument is provided and is a numeric value
+                        // if (!isset($assoc_args['quantity']) || !is_numeric($assoc_args['quantity'])) {
+                        //         WP_CLI::line("Please provide the quantity for generating books.");
+                        //         return;
+                        // }
 
-
-                        $quantity = intval($args[1]);
+                        // $quantity = intval($assoc_args['quantity']);
 
                         // API endpoint URL
                         $url = "https://fakerapi.it/api/v1/books?_quantity=" . $quantity;

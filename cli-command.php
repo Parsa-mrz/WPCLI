@@ -2,7 +2,7 @@
     <h1>CLI Command</h1>
     <hr><br><br>
 
-    <h2>1- genereate 'quantity' </h2>
+    <h2>1- genereate --quantity= </h2>
     <table class="wp-list-table widefat fixed striped">
         <thead>
             <tr>
@@ -23,7 +23,7 @@
     </table>
 
     <h3>Usage example:</h3>
-    <p>wp book generate 10</p>
+    <p>wp book generate --quantity=10</p>
     <hr>
     <br>
 
