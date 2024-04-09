@@ -32,7 +32,12 @@ if (!class_exists('Book_CLI_Command')) {
                                 case 'get':
                                         // Implement 'get<id>' subcommand to update a book
                                         // Example: wp book get 145
-                                        $this->get_book($assoc_args);
+                                        if (isset($args[1])) {
+                                                $book_id = $args[1];
+                                                $this->get_book($book_id, $assoc_args);
+                                        } else {
+                                                WP_CLI::error("Please provide the book ID.");
+                                        }
                                         break;
 
                                 case 'update':
@@ -139,10 +144,10 @@ if (!class_exists('Book_CLI_Command')) {
                                 'post_type'    => 'book', // Assuming 'book' is a custom post type
                                 // Custom meta fields
                                 'meta_input'   => array(
-                                        'author'    => $assoc_args['author'],
-                                        'isbn'      => $assoc_args['isbn'],
-                                        'genre'     => $assoc_args['genre'],
-                                        'publisher' => $assoc_args['publisher']
+                                        '_author'    => $assoc_args['author'],
+                                        '_isbn'      => $assoc_args['isbn'],
+                                        '_genre'     => $assoc_args['genre'],
+                                        '_publisher' => $assoc_args['publisher']
                                 )
                         );
 
@@ -157,15 +162,8 @@ if (!class_exists('Book_CLI_Command')) {
                 }
 
 
-                private function get_book($args)
+                private function get_book($book_id, $assoc_args)
                 {
-                        // Check if book ID is provided
-                        if (empty($args[0])) {
-                                WP_CLI::error("Please provide the book ID.");
-                        }
-
-                        // Extract book ID from args
-                        $book_id = $args[0];
 
                         // Get the post by ID
                         $book = get_post($book_id);
@@ -173,14 +171,14 @@ if (!class_exists('Book_CLI_Command')) {
                         // Check if the post exists and is of the 'book' post type
                         if ($book && $book->post_type === 'book') {
                                 // Retrieve book metadata
-                                $author = get_post_meta($book->ID, '_author', true);
-                                $genre = get_post_meta($book->ID, '_genre', true);
-                                $isbn = get_post_meta($book->ID, '_isbn', true);
-                                $publisher = get_post_meta($book->ID, '_publisher', true);
+                                $author = get_post_meta($book_id, '_author', true);
+                                $genre = get_post_meta($book_id, '_genre', true);
+                                $isbn = get_post_meta($book_id, '_isbn', true);
+                                $publisher = get_post_meta($book_id, '_publisher', true);
 
                                 // Prepare book data
                                 $book_data = array(
-                                        'ID' => $book->ID,
+                                        'ID' => $book_id,
                                         'Title' => $book->post_title,
                                         'Description' => $book->post_content,
                                         'Author' => $author,
@@ -190,7 +188,7 @@ if (!class_exists('Book_CLI_Command')) {
                                 );
 
                                 // Check the format argument to determine the output format
-                                $format = isset($args['format']) ? $args['format'] : 'table';
+                                $format = isset($assoc_args['format']) ? $assoc_args['format'] : 'table';
 
                                 // Output the formatted data based on the specified format
                                 switch ($format) {
@@ -205,6 +203,27 @@ if (!class_exists('Book_CLI_Command')) {
                                                 break;
                                         case 'ids':
                                                 WP_CLI::line($book->ID);
+                                                break;
+                                        case 'csv':
+                                                // Open the output stream
+                                                $output = fopen('php://output', 'w');
+                                                if ($output === false) {
+                                                        WP_CLI::error("Failed to open output stream for CSV.");
+                                                        break;
+                                                }
+
+                                                // Set the header for CSV download
+                                                header('Content-Type: text/csv');
+                                                header('Content-Disposition: attachment; filename="book.csv"');
+
+                                                // Add CSV column headers
+                                                fputcsv($output, array('ID', 'Title', 'Description', 'Author', 'Genre', 'ISBN', 'Publisher'));
+
+                                                // Add book data
+                                                fputcsv($output, $book_data);
+
+                                                // Close the output stream
+                                                fclose($output);
                                                 break;
                                         case 'count':
                                                 WP_CLI::line(1);
@@ -326,6 +345,29 @@ if (!class_exists('Book_CLI_Command')) {
                                         foreach ($formatted_books as $book) {
                                                 WP_CLI::line($book['ID']);
                                         }
+                                        break;
+                                case 'csv':
+                                        // Open the output stream
+                                        $output = fopen('php://output', 'w');
+                                        if ($output === false) {
+                                                WP_CLI::error("Failed to open output stream for CSV.");
+                                                break;
+                                        }
+
+                                        // Set the header for CSV download
+                                        header('Content-Type: text/csv');
+                                        header('Content-Disposition: attachment; filename="book.csv"');
+
+                                        // Add CSV column headers
+                                        fputcsv($output, array('ID', 'Title', 'Description', 'Author', 'Genre', 'ISBN', 'Publisher'));
+
+                                        // Add book data
+                                        foreach ($formatted_books as $book_data) {
+                                                fputcsv($output, $book_data);
+                                        }
+
+                                        // Close the output stream
+                                        fclose($output);
                                         break;
                                 case 'count':
                                         WP_CLI::line(count($formatted_books));
